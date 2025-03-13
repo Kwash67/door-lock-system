@@ -17,7 +17,7 @@ int main()
 DigitalOut led(LED1);
 //#else
 //    bool led;
-//#endif
+
 
     while (true) {
         led = !led;
