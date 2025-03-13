@@ -3,25 +3,6 @@
 #include "mbed.h"
 
 
-class Keypad
-{
-    public:
-
-    // constructor for the keypad class - you need to supply the pin names to which the rows/
-    // and columns are connected
-    Keypad(PinName row0, 
-           PinName row1, 
-           PinName row2, 
-           PinName row3, 
-           PinName col0, 
-           PinName col1, 
-           PinName col2);
-
-    // function that reads a key - returns mmediately with the key pressed or NO_KEY
-    // only one instance of a key value will be returned - coincident with the onset of 
-    // the key being pressed. Only publicly available member function
-    char ReadKey(void);
-
 // Value to indicate no key pressed
 #define NO_KEY 0
 
@@ -34,13 +15,13 @@ public:
      *   e.g. row pins could be PTA14, PTA15, PTA16, PTA17 and
      *        column pins could be PTA5, PTA6, PTA7 (or update as needed).
      */
-    Keypad(PinName PTA12 row0,
-           PinName PTA4 row1,
-           PinName PTA5 row2,
-           PinName PTC8 row3,
-           PinName PTD3 col0,
-           PinName PTA2 col1,
-           PinName PTA1 col2);
+    Keypad(PinName row0,
+           PinName row1,
+           PinName row2,
+           PinName row3,
+           PinName col0,
+           PinName col1,
+           PinName col2);
 
     /**
      * ReadKey() checks the latest key scan.

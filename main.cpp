@@ -50,7 +50,7 @@ int main() {
         }
 
         // Read the debounced key from the keypad.
-        char key = keypad.ReadKey();
+        char key = Keypad.ReadKey();
         
         // Turn on the LED if any key is pressed (i.e. key is not NO_KEY).
         if(key != NO_KEY) {
