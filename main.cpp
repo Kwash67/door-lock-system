@@ -4,7 +4,7 @@
  */
 
 #include "mbed.h"
-
+#include "keypad.h"
 
 // Blinking rate in milliseconds
 #define BLINKING_RATE     500ms
