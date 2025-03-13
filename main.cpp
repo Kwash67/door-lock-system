@@ -12,7 +12,7 @@
 
 int main()
 {
-    // Initialise the digital pin LED1 as an output
+    // Initialise the digital pin LED1 as an output 
 //#ifdef LED1
 DigitalOut led(LED1);
 //#else
