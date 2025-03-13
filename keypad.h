@@ -14,13 +14,13 @@ public:
      *   e.g. row pins could be PTA14, PTA15, PTA16, PTA17 and
      *        column pins could be PTA5, PTA6, PTA7 (or update as needed).
      */
-    Keypad(PinName row0,
-           PinName row1,
-           PinName row2,
-           PinName row3,
-           PinName col0,
-           PinName col1,
-           PinName col2);
+    Keypad(PinName PTA12 row0,
+           PinName PTA4 row1,
+           PinName PTA5 row2,
+           PinName PTC8 row3,
+           PinName PTD3 col0,
+           PinName PTA2 col1,
+           PinName PTA1 col2);
 
     /**
      * ReadKey() checks the latest key scan.

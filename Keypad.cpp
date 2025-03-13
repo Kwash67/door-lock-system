@@ -3,13 +3,13 @@
 
 // The constructor initializes every DigitalIn and DigitalOut
 // with the provided pin names and starts the key scanning thread.
-Keypad::Keypad(PinName row0,
-               PinName row1,
-               PinName row2,
-               PinName row3,
-               PinName col0,
-               PinName col1,
-               PinName col2)
+Keypad::Keypad(PinName PTA12 row0,
+               PinName PTA4 row1,
+               PinName PTA5 row2,
+               PinName PTC8 row3,
+               PinName PTD3 col0,
+               PinName PTA2 col1,
+               PinName PTA1 col2)
     : _row0(row0), 
       _row1(row1), 
       _row2(row2), 
