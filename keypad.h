@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mbed.h"
+#include "debouncing.h"
 
 
 // Value to indicate no key pressed
@@ -11,7 +12,7 @@ public:
     /**
      * Constructor for the Keypad class.
      * The pin assignments are provided as parameters—update these 
-     * according to the wiring on your MKL46Z256 board along with the datasheets:
+     * according to the wiring on the MKL46Z256 board along with the datasheets:
      *   e.g. row pins could be PTA14, PTA15, PTA16, PTA17 and
      *        column pins could be PTA5, PTA6, PTA7 (or update as needed).
      */
