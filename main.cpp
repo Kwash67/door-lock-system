@@ -26,7 +26,7 @@ int m = 0;
 DigitalOut led(LED1);
 Keypad Keypad(PTA12, PTA4, PTA5, PTC8, PTD3, PTA2, PTA1);
 
-/*(PinName PTA12 row0,
+/*(        PinName PTA12 row0,
            PinName PTA4 row1,
            PinName PTA5 row2,
            PinName PTC8 row3,
