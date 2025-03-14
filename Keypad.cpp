@@ -17,6 +17,7 @@ Keypad::Keypad(PinName row0,
       _col0(PTD3), 
       _col1(PTA2), 
       _col2(PTA1)
+      debouncer(5, NO_KEY) // 5 samples at 10ms each give ~50ms debounce delay.
 {
     // Initialise keys to NO_KEY (i.e. no key pressed)
     key = NO_KEY;
@@ -55,7 +56,11 @@ void Keypad::KeyScanner(void) {
         if (_row1 == 0) k = mapping[2][1];
         if (_row2 == 0) k = mapping[2][2];
         if (_row3 == 0) k = mapping[2][3];
-
+        
+        // Send the raw key through the debouncer.
+        char debouncedKey = debouncer.update(k);
+        key = debouncedKey;
+        
         // Update the shared key variable.
         key = k;
 
