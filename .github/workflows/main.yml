@@ -15,7 +15,7 @@ jobs:
       matrix:
         target: [KL46Z]
         profile: [release, debug, develop]
-        
+
     steps:
       -
         name: Checkout
@@ -50,6 +50,6 @@ jobs:
         name: build-example-application
         run: |
           set -e
-          mbed-tools init
+          mbed-tools new .
           mbed-tools deploy
           mbed-tools compile -t GCC_ARM -m ${{ matrix.target }} --profile ${{ matrix.profile }}
