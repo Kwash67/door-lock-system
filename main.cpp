@@ -24,49 +24,62 @@ int main() {
     // Pins: Row0, Row1, Row2, Row3, Col0, Col1, Col2
     Keypad keypad(PTC8, PTA5, PTA4, PTA12, PTD3, PTA2, PTA1);
 
-    // Buffer to store last 4 entered characters (initialized with spaces)
+    // Display buffer: Stores last 4 entered characters in left-to-right order
+    // Initialized with spaces to represent empty segments
     char inputBuffer[4] = {' ', ' ', ' ', ' '};
-    int inputCount = 0;  // Tracks number of valid entries in buffer
+    int inputCount = 0;  // Tracks number of valid entries (0-4)
+
+    // Initialize display: Clear all segments and set to known state
+    md.clear();     // Turn off all LCD segments
+    md.Home();      // Reset write position to first character
+    md.printf("    ");  // Explicitly set empty display
 
     while (true) {
-        led = !led;  // Toggle status LED every loop iteration
+        led = !led;  // Toggle heartbeat LED (system alive indicator)
         
-        // Read debounced key from keypad
+        // Read debounced key from keypad (non-blocking)
         char key = keypad.ReadKey();
 
         if (key != NO_KEY) {  // Valid key detected
             led2 = 1;  // Illuminate keypress indicator
             
-            if (key == '#') {  // Clear command
-                md.clear();    // Clear all LCD segments
-                md.Home();     // Reset cursor to first position
+            if (key == '#') {  // Clear command: Full display reset
+                md.clear();    // SLCD native clear function (all segments off)
+                md.Home();     // Reset cursor to position 0
                 memset(inputBuffer, ' ', sizeof(inputBuffer));  // Clear buffer
                 inputCount = 0;  // Reset character counter
+                md.printf("    ");  // Force blank display (prevent ghost segments)
             } 
-            else {  // Numeric key handling
-                // Update circular buffer with new entry
-                if (inputCount < 4) {
-                    // Add to next available position
-                    inputBuffer[inputCount++] = key;
-                } else {
-                    // Shift buffer left (oldest entry drops off)
+            else {  // Numeric input handling
+                /* Buffer management:
+                - When buffer full (4 entries), shift left to discard oldest
+                - New entries always added to rightmost position */
+                if (inputCount >= 4) {
+                    // Shift buffer left (discard oldest entry at index 0)
                     for (int i = 0; i < 3; ++i) {
                         inputBuffer[i] = inputBuffer[i + 1];
                     }
-                    inputBuffer[3] = key;  // Add new entry at end
+                } else {
+                    inputCount++;  // Track new entries until buffer full
                 }
                 
-                // Update display with current buffer contents
-                md.Home();  // Start at first display position
+                // Add new entry to rightmost position
+                inputBuffer[inputCount >= 4 ? 3 : inputCount - 1] = key;
+
+                /* Display update:
+                - Always start from home position (left alignment)
+                - Use putc() for precise character control
+                - Write spaces for empty buffer positions */
+                md.Home();
                 for (int i = 0; i < 4; ++i) {
-                    md.putc(inputBuffer[i]);  // Write each character
+                    inputBuffer[i] != ' ' ? md.putc(inputBuffer[i]) : md.putc(' ');
                 }
             }
         } else {
             led2 = 0;  // Turn off keypress indicator
         }
 
-        // Debounce delay and processor yield
+        // 10ms delay: Keypad debouncing + processor yield
         ThisThread::sleep_for(10ms);
     }
 }
