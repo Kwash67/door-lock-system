@@ -13,45 +13,60 @@
 
 
 int main() {
+    // Initialize LCD display
     SLCD md;
-
-    int s = 0;
-    int m = 0;
-
-    // System Status LED
+    
+    // Status LEDs (LED1 blinks continuously, LED2 shows keypress activity)
     DigitalOut led(LED1);
     DigitalOut led2(LED2);
+    
+    // Initialize keypad with specific pin assignments
+    // Pins: Row0, Row1, Row2, Row3, Col0, Col1, Col2
+    Keypad keypad(PTC8, PTA5, PTA4, PTA12, PTD3, PTA2, PTA1);
 
-    //Instantiation of the keypad
-    Keypad Keypad(PTC8, PTA5, PTA4, PTA12, PTD3, PTA2, PTA1);
-    // Keypad Keypad(PTA12, PTA4, PTA5, PTC8, PTD3, PTA2, PTA1);
+    // Buffer to store last 4 entered characters (initialized with spaces)
+    char inputBuffer[4] = {' ', ' ', ' ', ' '};
+    int inputCount = 0;  // Tracks number of valid entries in buffer
 
     while (true) {
-        led = !led;
-        // md.printf("%02d%02d", m, s);
-        // md.Colon(1);
-        // ThisThread::sleep_for(BLINKING_RATE);
-        // md.Colon(0);
-        // ThisThread::sleep_for(BLINKING_RATE);
-        // s++;
-        // if (s>=60) {
-        //     s = 0;
-        //     m++;
-        // }
+        led = !led;  // Toggle status LED every loop iteration
+        
+        // Read debounced key from keypad
+        char key = keypad.ReadKey();
 
-        // Read the debounced key from the keypad.
-        char key = Keypad.ReadKey();
-        
-        // Turn on the LED if any key is pressed (i.e. key is not NO_KEY).
-        if(key != NO_KEY) {
-            led2 = 1;  //Access control probably needs to be implemented here 
-            md.printf("%c",key);
+        if (key != NO_KEY) {  // Valid key detected
+            led2 = 1;  // Illuminate keypress indicator
+            
+            if (key == '#') {  // Clear command
+                md.clear();    // Clear all LCD segments
+                md.Home();     // Reset cursor to first position
+                memset(inputBuffer, ' ', sizeof(inputBuffer));  // Clear buffer
+                inputCount = 0;  // Reset character counter
+            } 
+            else {  // Numeric key handling
+                // Update circular buffer with new entry
+                if (inputCount < 4) {
+                    // Add to next available position
+                    inputBuffer[inputCount++] = key;
+                } else {
+                    // Shift buffer left (oldest entry drops off)
+                    for (int i = 0; i < 3; ++i) {
+                        inputBuffer[i] = inputBuffer[i + 1];
+                    }
+                    inputBuffer[3] = key;  // Add new entry at end
+                }
+                
+                // Update display with current buffer contents
+                md.Home();  // Start at first display position
+                for (int i = 0; i < 4; ++i) {
+                    md.putc(inputBuffer[i]);  // Write each character
+                }
+            }
         } else {
-            led2 = 0;
+            led2 = 0;  // Turn off keypress indicator
         }
-        
-        // Short delay so the loop doesn't hog the processor.
+
+        // Debounce delay and processor yield
         ThisThread::sleep_for(10ms);
     }
 }
-
