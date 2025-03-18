@@ -11,6 +11,9 @@ include(${MBED_PATH}/tools/cmake/app.cmake)
 
 project(${APP_TARGET})
 
+# Add this line to include the SLCD directory
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/SLCD)
+
 add_subdirectory(${MBED_PATH})
 
 add_executable(${APP_TARGET})
@@ -23,6 +26,7 @@ target_sources(${APP_TARGET}
 target_link_libraries(${APP_TARGET}
     PRIVATE
         mbed-os
+        SLCD  # Add this line to link against SLCD
 )
 
 mbed_set_post_build(${APP_TARGET})
