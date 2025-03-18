@@ -50,6 +50,5 @@ jobs:
         name: build-example-application
         run: |
           set -e
-          mbed-tools new .
           mbed-tools deploy
           mbed-tools compile -t GCC_ARM -m ${{ matrix.target }} --profile ${{ matrix.profile }}
