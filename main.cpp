@@ -6,7 +6,7 @@
 #undef __ARM_FP // removes the error on the #include "mbed.h" line
 #include "mbed.h"
 #include "keypad.h"
-#include "SLCD.h"
+#include "SLCD/SLCD.h"
 
 // Blinking rate in milliseconds
 #define BLINKING_RATE     500ms
