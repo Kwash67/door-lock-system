@@ -33,9 +33,9 @@ void read_password_from_flash()
     memset(user_password, 0, sizeof(user_password));  // Ensure "user_password" is empty
 
     // Read 4 bytes password from Flash
-    flash.read(user_password, FLASH_STORAGE_ADDR, 4);
+    flash.read(user_password, FLASH_STORAGE_ADDR, 8);
 
-    user_password[4] = '\0';  // Ensure String is finished
+    user_password[8] = '\0';  // Ensure String is finished
 
     flash.deinit();  // Close Flash
 }
@@ -52,13 +52,13 @@ void save_password_to_flash(const char *new_password)
     memset(temp_buffer, 0xFF, sector_size);  // Fill with 0xFF first
 
     // copy new password
-    strncpy(temp_buffer, new_password, 4);  // Make sure you only save 4 characters.
+    strncpy(temp_buffer, new_password, 8);  // Make sure you only save 4 characters.
 
     // remove Flash sector
     flash.erase(FLASH_STORAGE_ADDR, sector_size);
 
     //write new password
-    flash.program(temp_buffer, FLASH_STORAGE_ADDR, 4);  //only write 4 bytes
+    flash.program(temp_buffer, FLASH_STORAGE_ADDR, 8);  //only write 4 bytes
 
     flash.deinit();  //close Flash
 }
@@ -129,7 +129,7 @@ int main()
                 slcd.Home();
                 slcd.printf("%s", &showed_password[4]);
 
-                if (key == '*') 
+                if (key == '#') 
                 {
                     slcd.clear();
                     position = 0;
@@ -137,14 +137,14 @@ int main()
                 }
 
             }
-            else if (position == 8 && key == '*')
+            else if (position == 8 && key == '#')
             {
                 slcd.clear();
                 position = 0;
                 memset(entered_password, 0, sizeof(entered_password));
             }
 
-            else if (key == '#') //Confirm
+            else if (key == '*') //Confirm
             {
                 entered_password[8] = '\0';
                 if (position == 8 && strcmp(entered_password, admin_password) == 0) 
