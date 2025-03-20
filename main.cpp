@@ -19,10 +19,10 @@ DigitalOut led(LED1);
 DigitalOut led2(LED2);
 FlashIAP flash;
 
-const char admin_password[5] = "1234";
-char user_password[5] = "0000";
-char entered_password[5] = {'\0'}; 
-char showed_password[5] = {'\0'};
+const char admin_password[9] = "12345678";
+char user_password[9] = "00000000";
+char entered_password[9] = {'\0'}; 
+char showed_password[9] = {'\0'};
 int position = 0;
 bool is_admin_mode = false;
 
@@ -112,22 +112,22 @@ int main()
         char key = keypad.ReadKey();
         if (key != NO_KEY) 
         {
-            if (position < 4) 
+            if (position < 8) 
             {
-                memset(showed_password, ' ', 4);
-                entered_password[4] = '\0';
-                showed_password[4] = '\0';
+                memset(showed_password, ' ', 8);
+                entered_password[8] = '\0';
+                showed_password[8] = '\0';
                 entered_password[position] = key;
                 for(int i = 0; i <= position; i++)
                 {
-                    showed_password[3 - position + i] = entered_password[i];
+                    showed_password[7 - position + i] = entered_password[i];
                 }
 
                 position++;
 
                 slcd.clear();
                 slcd.Home();
-                slcd.printf("%s", showed_password);
+                slcd.printf("%s", &showed_password[4]);
 
                 if (key == '*') 
                 {
@@ -137,7 +137,7 @@ int main()
                 }
 
             }
-            else if (position == 4 && key == '*')
+            else if (position == 8 && key == '*')
             {
                 slcd.clear();
                 position = 0;
@@ -146,8 +146,8 @@ int main()
 
             else if (key == '#') //Confirm
             {
-                entered_password[4] = '\0';
-                if (position == 4 && strcmp(entered_password, admin_password) == 0) 
+                entered_password[8] = '\0';
+                if (position == 8 && strcmp(entered_password, admin_password) == 0) 
                 {
                     slcd.clear();
                     slcd.printf("AD");
