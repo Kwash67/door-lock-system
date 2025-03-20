@@ -15,7 +15,8 @@
 Keypad keypad(PTC8, PTA5, PTA4, PTA12, PTD3, PTA2, PTA1);
 
 SLCD slcd;
-DigitalOut led(LED2);
+DigitalOut led(LED1);
+DigitalOut led2(LED2);
 FlashIAP flash;
 
 const char admin_password[5] = "1234";
@@ -64,22 +65,40 @@ void save_password_to_flash(const char *new_password)
 
 
 
-void blink_led(int times, std::chrono::milliseconds(interval)) 
+void blink_led(int times, char led_type, std::chrono::milliseconds(interval)) 
 {
-    for (int i = 0; i < times; i++) 
-    {
-        led = 1;
-        ThisThread::sleep_for(interval);
-        led = 0;
-        ThisThread::sleep_for(interval);
+    if(led_type == 'g'){
+        for (int i = 0; i < times; i++) 
+        {
+            led = 1;
+            ThisThread::sleep_for(interval);
+            led = 0;
+            ThisThread::sleep_for(interval);
+        }
+    }
+    else{ // if led_type == 'r'
+        for (int i = 0; i < times; i++) 
+        {
+            led2 = 1;
+            ThisThread::sleep_for(interval);
+            led2 = 0;
+            ThisThread::sleep_for(interval);
+        }
     }
 }
 
-void led_on_for(std::chrono::milliseconds(duration)) 
+void led_on_for(int led_type, std::chrono::milliseconds(duration)) 
 {
-    led = 1;
-    ThisThread::sleep_for(duration);
-    led = 0;
+    if(led_type == 'g'){
+        led = 1;
+        ThisThread::sleep_for(duration);
+        led = 0;
+    }
+    else{ // if led_type == 'r'
+        led2 = 1;
+        ThisThread::sleep_for(duration);
+        led2 = 0;
+    }
 }
 
 int main() 
@@ -154,12 +173,12 @@ int main()
                     {  
                         slcd.clear();
                         slcd.printf("YES");  // Show "TURE"
-                        blink_led(5, std::chrono::milliseconds(300));  // LED flash 5 times
+                        blink_led(5, 'g', std::chrono::milliseconds(300));  // LED flash 5 times
                     } 
                     else {  
                         slcd.clear();
                         slcd.printf("FA");  // Show "FALSE"
-                        led_on_for(std::chrono::milliseconds(2000));  // LED hold 5 second
+                        led_on_for('r', std::chrono::milliseconds(2000));  // LED hold 5 second
                     }
                 }
 
