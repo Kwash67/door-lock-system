@@ -6,83 +6,169 @@
 #undef __ARM_FP // removes the error on the #include "mbed.h" line
 #include "mbed.h"
 #include "keypad.h"
+#include "DigitalOut.h"
+#include "FlashIAP.h"
 #include "SLCD/SLCD.h"
 
-// Blinking rate in milliseconds
-#define BLINKING_RATE     500ms
+#define FLASH_STORAGE_ADDR 0x0003FC00 //Storage address
+
+Keypad keypad(PTC8, PTA5, PTA4, PTA12, PTD3, PTA2, PTA1);
+
+SLCD slcd;
+DigitalOut led(LED2);
+FlashIAP flash;
+
+const char admin_password[5] = "1234";
+char user_password[5] = "0000";
+char entered_password[5] = {'\0'}; 
+char showed_password[5] = {'\0'};
+int position = 0;
+bool is_admin_mode = false;
+
+void read_password_from_flash() 
+{
+    flash.init();  // Initialise Flash
+
+    memset(user_password, 0, sizeof(user_password));  // Ensure "user_password" is empty
+
+    // Read 4 bytes password from Flash
+    flash.read(user_password, FLASH_STORAGE_ADDR, 4);
+
+    user_password[4] = '\0';  // Ensure String is finished
+
+    flash.deinit();  // Close Flash
+}
 
 
-int main() {
-    // Initialize LCD display
-    SLCD md;
-    
-    // Status LEDs (LED1 blinks continuously, LED2 shows keypress activity)
-    DigitalOut led(LED1);
-    DigitalOut led2(LED2);
-    
-    // Initialize keypad with specific pin assignments
-    // Pins: Row0, Row1, Row2, Row3, Col0, Col1, Col2
-    Keypad keypad(PTC8, PTA5, PTA4, PTA12, PTD3, PTA2, PTA1);
+void save_password_to_flash(const char *new_password) 
+{
+    flash.init();  // Initialise Flash
 
-// Display buffer (stores last 4 digits, left to right)
-    char inputBuffer[4] = {' ', ' ', ' ', ' '};
-    int inputCount = 0;  // Number of stored digits
+    uint32_t sector_size = flash.get_sector_size(FLASH_STORAGE_ADDR);
 
-    // Initialize display with blank spaces
-    md.clear();     // Turn off all LCD segments
-    md.Home();      // Set write position to start
-    md.printf("    ");  // Explicit blank display
+    //Create a temporary buffer and fill it with 0xFF
+    char temp_buffer[sector_size];
+    memset(temp_buffer, 0xFF, sector_size);  // Fill with 0xFF first
 
-    while (true) {
-        led = !led;  // Toggle heartbeat LED
-        
-        char key = keypad.ReadKey();  // Get debounced keypress
+    // copy new password
+    strncpy(temp_buffer, new_password, 4);  // Make sure you only save 4 characters.
 
-        if (key != NO_KEY) {
-            led2 = 1;  // Light keypress indicator
-            
-            if (key == '#') {  // FULL DISPLAY CLEAR
-                /* Clear Procedure:
-                1. Use SLCD's hardware clear function
-                2. Reset software buffer
-                3. Explicitly blank all positions */
-                
-                md.clear();     // 1. Turn off all segments
-                md.Home();      // Reset cursor to start
-                memset(inputBuffer, ' ', sizeof(inputBuffer)); // 2. Clear buffer
-                inputCount = 0; // Reset digit counter
-                
-                // 3. Force blank all display positions
-                for(int i = 0; i < 4; i++) {
-                    md.putc(' ');  // Clear each digit position
+    // remove Flash sector
+    flash.erase(FLASH_STORAGE_ADDR, sector_size);
+
+    //write new password
+    flash.program(temp_buffer, FLASH_STORAGE_ADDR, 4);  //only write 4 bytes
+
+    flash.deinit();  //close Flash
+}
+
+
+
+void blink_led(int times, std::chrono::milliseconds(interval)) 
+{
+    for (int i = 0; i < times; i++) 
+    {
+        led = 1;
+        ThisThread::sleep_for(interval);
+        led = 0;
+        ThisThread::sleep_for(interval);
+    }
+}
+
+void led_on_for(std::chrono::milliseconds(duration)) 
+{
+    led = 1;
+    ThisThread::sleep_for(duration);
+    led = 0;
+}
+
+int main() 
+{
+    slcd.Home();  
+    slcd.clear();
+    read_password_from_flash();
+
+    while (true) 
+    {
+        char key = keypad.ReadKey();
+        if (key != NO_KEY) 
+        {
+            if (position < 4) 
+            {
+                memset(showed_password, ' ', 4);
+                entered_password[4] = '\0';
+                showed_password[4] = '\0';
+                entered_password[position] = key;
+                for(int i = 0; i <= position; i++)
+                {
+                    showed_password[3 - position + i] = entered_password[i];
                 }
-            } 
-            else {  // HANDLE NUMBER INPUT
-                /* Buffer Management:
-                - Maintain last 4 entered digits
-                - Shift old entries left when full */
-                if(inputCount < 4) {
-                    // Add to next available position
-                    inputBuffer[inputCount++] = key;
-                } else {
-                    // Shift buffer left (discard oldest)
-                    for(int i = 0; i < 3; i++) {
-                        inputBuffer[i] = inputBuffer[i+1];
-                    }
-                    inputBuffer[3] = key;  // Add new to right
+
+                position++;
+
+                slcd.clear();
+                slcd.Home();
+                slcd.printf("%s", showed_password);
+
+                if (key == '*') 
+                {
+                    slcd.clear();
+                    position = 0;
+                    memset(entered_password, 0, sizeof(entered_password));
                 }
 
-                // Update display with current buffer
-                md.Home();  // Start from leftmost position
-                for(int i = 0; i < 4; i++) {
-                    md.putc(inputBuffer[i]);  // Write each character
-                }
             }
-        } else {
-            led2 = 0;  // Turn off keypress indicator
-        }
+            else if (position == 4 && key == '*')
+            {
+                slcd.clear();
+                position = 0;
+                memset(entered_password, 0, sizeof(entered_password));
+            }
 
-        // 10ms delay for debounce and CPU yield
-        ThisThread::sleep_for(10ms);
+            else if (key == '#') //Confirm
+            {
+                entered_password[4] = '\0';
+                if (position == 4 && strcmp(entered_password, admin_password) == 0) 
+                {
+                    slcd.clear();
+                    slcd.printf("AD");
+                    is_admin_mode = true;
+                    position = 0;
+                    memset(entered_password, 0, sizeof(entered_password));
+                    ThisThread::sleep_for(1000ms);
+                    slcd.clear();
+                } 
+                
+                else if (is_admin_mode)//Manager Mode: Store the new password
+                {
+                    save_password_to_flash(entered_password);
+                    read_password_from_flash();
+                    slcd.clear();
+                    slcd.printf("8888");  // Use 8888 to show saved
+                    is_admin_mode = false;  //Exit manager mode
+                } 
+
+                else //Normal user mode: valide password
+                {
+                    if (strcmp(entered_password, user_password) == 0) 
+                    {  
+                        slcd.clear();
+                        slcd.printf("YES");  // Show "TURE"
+                        blink_led(5, std::chrono::milliseconds(300));  // LED flash 5 times
+                    } 
+                    else {  
+                        slcd.clear();
+                        slcd.printf("FA");  // Show "FALSE"
+                        led_on_for(std::chrono::milliseconds(2000));  // LED hold 5 second
+                    }
+                }
+
+                position = 0;
+                memset(entered_password, 0, sizeof(entered_password));
+                ThisThread::sleep_for(500ms);
+                slcd.clear();
+            }
+        }
+        ThisThread::sleep_for(80ms);
     }
 }
