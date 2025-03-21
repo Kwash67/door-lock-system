@@ -17,23 +17,21 @@ Keypad keypad(PTC8, PTA5, PTA4, PTA12, PTD3, PTA2, PTA1);
 SLCD slcd;
 DigitalOut led(LED1);
 DigitalOut led2(LED2);
-// these variables exist outside of any function and will persist for the lifetime of the program
 char entered_password[9] = {'\0'}; 
 int tries = 0;
 int max_tries = 4;
 
-// Structure to represent a user with a password and role
+// User Struct
 typedef struct {
     char password[9];
     char role;
 } User;
 
-// Define a list of users
+// List of users
 #define MAX_USERS 10
 User users[MAX_USERS] = {
-    {"12345678", 'a'},  // Admin password
-    {"00000000", 'u'},  // User password
-    // Add more users as needed
+    {"12345678", 'a'},  // Admin 
+    {"00000000", 'u'},  // User 
 };
 
 char Compare(char* entered_password) {
@@ -47,6 +45,19 @@ char Compare(char* entered_password) {
     return 'x';  // No matching password found
 }
 
+void takePassword(void){
+    //  Read the debounced key from the keypad.
+    char key = keypad.ReadKey();
+    slcd.Home();  
+    slcd.clear();
+    bool exit = false;
+    while(!exit){
+        if(key != NO_KEY){
+            
+        }
+    }
+}
+
 int main() 
 {
     while (true) 
@@ -57,25 +68,25 @@ int main()
             //  Accept input. Input module. Exit after Enter (#) is pressed.
 
             //  String compare logic. Returns 'a' for admin, 'u' for user, 'x' for wrong password
+            char auth = Compare(entered_password);
 
-            //  if(auth == 'u'){
-            //     slcd.printf("Open")
-            //     green led, 3 seconds
-            //  }
-
-            //  else if(auth == 'a'){
-            //     slcd.printf("Admin")
-            //     Display Admin menu
-            //  }
-
-            //  else {
-            //     slcd.printf("FAIL")
-            //     tries++
-            //  }
+            if(auth == 'u'){
+                slcd.printf("Open");
+                // turn on green LED
+            }
+            else if(auth == 'a'){
+                slcd.printf("Admin");
+                // Admin menu
+            }
+            else {
+                slcd.printf("FAIL");
+                tries++;
+            }
         }
         else {
-            //    slcd.printf("WAIT")
-            //    tries++
+            slcd.printf("WAIT");
+            ThisThread::sleep_for(10s);
+            tries = 0;
         }
 
         ThisThread::sleep_for(80ms);
