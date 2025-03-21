@@ -9,6 +9,7 @@
 #include "DigitalOut.h"
 #include "FlashIAP.h"
 #include "SLCD/SLCD.h"
+#include "debouncing.h"
 
 #define FLASH_STORAGE_ADDR 0x0003FC00 //Storage address
 
@@ -18,6 +19,7 @@ SLCD slcd;
 DigitalOut led(LED1);
 DigitalOut led2(LED2);
 FlashIAP flash;
+KeyDebouncer debouncer(5); // 50ms debounce 
 
 const char admin_password[9] = "12345678";
 char user_password[9] = "00000000";
@@ -188,6 +190,6 @@ int main()
                 slcd.clear();
             }
         }
-        ThisThread::sleep_for(80ms);
+        ThisThread::sleep_for(10ms);
     }
 }
