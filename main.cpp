@@ -114,7 +114,7 @@ int main()
         char key = keypad.ReadKey();
         if (key != NO_KEY) 
         {
-            if (position < 8) 
+            if (position < 8 && key != '*' && key != '#') 
             {
                 memset(showed_password, ' ', 8);
                 entered_password[8] = '\0';
@@ -131,56 +131,66 @@ int main()
                 slcd.Home();
                 slcd.printf("%s", &showed_password[4]);
 
-                if (key == '#') 
-                {
-                    slcd.clear();
-                    position = 0;
-                    memset(entered_password, 0, sizeof(entered_password));
-                }
-
             }
-            else if (position == 8 && key == '#')
+            else if (key == '*') // Clear
             {
                 slcd.clear();
                 position = 0;
                 memset(entered_password, 0, sizeof(entered_password));
             }
 
-            else if (key == '*') //Confirm
+            else if (key == '#') //Confirm
             {
                 entered_password[8] = '\0';
-                if (position == 8 && strcmp(entered_password, admin_password) == 0) 
-                {
-                    slcd.clear();
-                    slcd.printf("AD");
-                    is_admin_mode = true;
-                    position = 0;
-                    memset(entered_password, 0, sizeof(entered_password));
-                    ThisThread::sleep_for(1000ms);
-                    slcd.clear();
-                } 
                 
-                else if (is_admin_mode)//Manager Mode: Store the new password
-                {
-                    save_password_to_flash(entered_password);
-                    read_password_from_flash();
+                // Check if password is too short (less than 4 characters)
+                if (position < 4) {
                     slcd.clear();
-                    slcd.printf("8888");  // Use 8888 to show saved
-                    is_admin_mode = false;  //Exit manager mode
-                } 
+                    slcd.printf("INSF");  // Display "INSF" for Insufficient Password
+                    led_on_for('r', std::chrono::milliseconds(1000));  // Red LED for 1 second
+                }
 
-                else //Normal user mode: valide password
-                {
-                    if (strcmp(entered_password, user_password) == 0) 
-                    {  
+                else {
+                    // Fill remaining positions with zeros if needed
+                    if (position < 8) {
+                        for (int i = position; i < 8; i++) {
+                            entered_password[i] = '0';
+                        }
+                    }
+                    
+                    if (strcmp(entered_password, admin_password) == 0) 
+                    {
                         slcd.clear();
-                        slcd.printf("YES");  // Show "TURE"
-                        blink_led(5, 'g', std::chrono::milliseconds(300));  // LED flash 5 times
+                        slcd.printf("AD");
+                        is_admin_mode = true;
+                        position = 0;
+                        memset(entered_password, 0, sizeof(entered_password)); // clear entered password
+                        ThisThread::sleep_for(1000ms);
+                        slcd.clear();
                     } 
-                    else {  
+                    
+                    else if (is_admin_mode) //Manager Mode: Store the new password
+                    {
+                        save_password_to_flash(entered_password);
+                        read_password_from_flash();
                         slcd.clear();
-                        slcd.printf("FA");  // Show "FALSE"
-                        led_on_for('r', std::chrono::milliseconds(2000));  // LED hold 5 second
+                        slcd.printf("8888");  // Use 8888 to show saved
+                        is_admin_mode = false;  //Exit manager mode
+                    } 
+
+                    else //Normal user mode: validate password
+                    {
+                        if (strcmp(entered_password, user_password) == 0) 
+                        {  
+                            slcd.clear();
+                            slcd.printf("YES");  // Show "YES"
+                            blink_led(5, 'g', std::chrono::milliseconds(300));  // LED flash 5 times
+                        } 
+                        else {  
+                            slcd.clear();
+                            slcd.printf("FA");  // Show "FA" for fail
+                            led_on_for('r', std::chrono::milliseconds(2000));  // LED hold 2 seconds
+                        }
                     }
                 }
 

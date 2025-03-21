@@ -45,9 +45,9 @@ class Keypad
 
     // keypad mapping key position to value
     // this returns printable ascii codes corresponding to each key
-    char mapping[3][4] = {{'1','4','7','#'},
+    char mapping[3][4] = {{'1','4','7','*'},
                           {'2','5','8','0'},
-                          {'3','6','9','*'}};
+                          {'3','6','9','#'}};
 
     // variables shared between keyscanner and read key
     char key, key_p;
