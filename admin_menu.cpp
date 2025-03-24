@@ -11,10 +11,10 @@ void executeMenuItem(int menuIndex);
 
 // Menu items
 const char* menuItems[] = {
-    "1.USER PASS",
-    "2.ADD USER",
-    "3.DEL USER",
-    "4.ADMIN PASS"
+    "1.USR",
+    "2.ADMN"
+    "3.ADD",
+    "4.DEL",
 };
 
 const int numMenuItems = 4;
@@ -104,12 +104,6 @@ void executeMenuItem(int menuIndex) {
             // Admin password setting functionality
             break;
     }
-    
-    // After completing the action, return to menu
-    wait_ms(2000); // Wait for 2 seconds to show the selection
-    menuActive = true;
-    scrollPosition = 0;
-    scrollTicker.attach(&displayMenu, 0.5); // Restart scrolling
 }
 
 void handleKeypress(char key) {
@@ -139,17 +133,4 @@ void handleKeypress(char key) {
             // Ignore other keypresses
             break;
     }
-}
-
-void initMenu() {
-    // Initialize the LCD
-    slcdPtr->Contrast(10); // Set contrast to a suitable level
-    
-    // Start the menu scrolling
-    scrollTicker.attach(&displayMenu, 0.5); // Scroll every 0.5 seconds
-}
-
-// This function should be called from your main.cpp when a key is pressed
-void processMenuKey(char key) {
-    handleKeypress(key);
 }

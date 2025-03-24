@@ -22,6 +22,9 @@ target_sources(${APP_TARGET}
     PRIVATE
         main.cpp
         Keypad.cpp
+        debouncing.cpp
+        input_module.cpp
+        user_management.cpp
 )
 
 target_link_libraries(${APP_TARGET}
