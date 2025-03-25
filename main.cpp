@@ -224,184 +224,186 @@ int main() {
                 continue;
             }
             
-            //----- STATE: NORMAL (Regular login mode) -----
-            if (state == STATE_NORMAL) {
-                // Accept digits until '#' is pressed or max 8 digits reached.
-                if (key != '#' && position < 8) {
-                    // Append key to entered password.
-                    entered_password[position] = key;
-                    position++;
-                    // Update and display masked (right-aligned) input.
-                    update_input_display();
-                }
-                else if (key == '#' && position > 0) {
-                    entered_password[position] = '\0';
-                    
-                    // Check for minimum length (4 digits).
-                    if (position < 4) {
-                        display_message("INSF");  // "INSF" = insufficient
-                        led_on_for('r', 1000ms);
-                        clear_input();
-                        continue;
+            switch (state) {
+                //----- STATE: NORMAL (Regular login mode) -----
+                case STATE_NORMAL:
+                    // Accept digits until '#' is pressed or max 8 digits reached.
+                    if (key != '#' && position < 8) {
+                        // Append key to entered password.
+                        entered_password[position] = key;
+                        position++;
+                        // Update and display masked (right-aligned) input.
+                        update_input_display();
                     }
-                    
-                    // Pad with zeros if fewer than 8 digits.
-                    if (position < 8) {
-                        for (int i = position; i < 8; i++) {
-                            entered_password[i] = '0';
+                    else if (key == '#' && position > 0) {
+                        entered_password[position] = '\0';
+                        
+                        // Check for minimum length (4 digits).
+                        if (position < 4) {
+                            display_message("INSF");  // "INSF" = insufficient
+                            led_on_for('r', 1000ms);
+                            clear_input();
+                            continue;
                         }
-                        entered_password[8] = '\0';
-                    }
-                    
-                    // Check if the entered password matches the admin password.
-                    if (strcmp(entered_password, admin_password) == 0) {
-                        display_message("Ad  ");  // "Ad" = admin mode
-                        ThisThread::sleep_for(1000ms);
-                        slcd.clear();
-                        state = STATE_ADMIN_MENU;
-                        clear_input();
-                    }
-                    else {
-                        // Check if entered password matches any of the nine user passwords.
-                        bool user_valid = false;
-                        for (int i = 0; i < 9; i++) {
-                            if (strcmp(entered_password, user_passwords[i]) == 0) {
-                                user_valid = true;
-                                break;
+                        
+                        // Pad with zeros if fewer than 8 digits.
+                        if (position < 8) {
+                            for (int i = position; i < 8; i++) {
+                                entered_password[i] = '0';
                             }
+                            entered_password[8] = '\0';
                         }
-                        if (user_valid) {
-                            display_message("yes ");  // "yes " = successful login
-                            blink_led(5, 'g', 300ms);
-                        } else {
-                            display_message("FA  ");  // "FA  " = failure
-                            led_on_for('r', 2000ms);
-                        }
-                        clear_input();
-                    }
-                }
-            } // end STATE_NORMAL
-            
-            //----- STATE: ADMIN_MENU (Admin selects which password to update) -----
-            else if (state == STATE_ADMIN_MENU) {
-                // In admin mode:
-                //   Key '0' selects updating the admin password.
-                //   Keys '1' through '9' select the corresponding user password.
-                if (key == '0') {
-                    current_selection = -1;  // -1 indicates admin password update.
-                    display_message("ChAd");  // "CDAd" = Change or Delete admin (short for admin)
-                    clear_input();
-                    state = STATE_SET_NEW_PASSWORD;
-                }
-                else if (key >= '1' && key <= '9') {
-                    current_selection = key - '1';  // Map key '1'-'9' to indices 0-8.
-                    // Build a message such as "ChU1", "ChU2", etc.
-                    char msg[5] = "CdU";
-                    msg[3] = key; 
-                    msg[4] = '\0';
-                    display_message(msg);
-                    clear_input();
-
-
-                    ThisThread::sleep_for(1000ms);
-                    slcd.clear(); //Clear "CdU "
-                    display_message("C1d2");
-                    clear_input();
-                    key = '\0';
-
-                    char confirm_key = '\0';
-                    while (confirm_key != '#') {
-                        key = keypad.ReadKey();  
-                        if (key == '1' || key == '2') {
-                            confirm_key = key;
+                        
+                        // Check if the entered password matches the admin password.
+                        if (strcmp(entered_password, admin_password) == 0) {
+                            display_message("Ad  ");  // "Ad" = admin mode
+                            ThisThread::sleep_for(1000ms);
                             slcd.clear();
-                            slcd.Home();
-                            slcd.printf("%c",confirm_key);
+                            state = STATE_ADMIN_MENU;
+                            clear_input();
                         }
-                        else if (key == '#') {
-                            break;
+                        else {
+                            // Check if entered password matches any of the nine user passwords.
+                            bool user_valid = false;
+                            for (int i = 0; i < 9; i++) {
+                                if (strcmp(entered_password, user_passwords[i]) == 0) {
+                                    user_valid = true;
+                                    break;
+                                }
+                            }
+                            if (user_valid) {
+                                display_message("yes ");  // "yes " = successful login
+                                blink_led(5, 'g', 300ms);
+                            } else {
+                                display_message("FA  ");  // "FA  " = failure
+                                led_on_for('r', 2000ms);
+                            }
+                            clear_input();
                         }
-                        ThisThread::sleep_for(200ms);
                     }
-                    if(confirm_key == '1'){
-                        slcd.clear();
-                        slcd.Home();
+                break; // end STATE_NORMAL
+                
+                //----- STATE: ADMIN_MENU (Admin selects which password to update) -----
+                case STATE_ADMIN_MENU:
+                    // In admin mode:
+                    //   Key '0' selects updating the admin password.
+                    //   Keys '1' through '9' select the corresponding user password.
+                    if (key == '0') {
+                        current_selection = -1;  // -1 indicates admin password update.
+                        display_message("ChAd");  // "CDAd" = Change or Delete admin (short for admin)
                         clear_input();
-                        slcd.printf("EnEr");
                         state = STATE_SET_NEW_PASSWORD;
                     }
-                    else if(confirm_key == '2'){
-                        state = STATE_DELETE_OLD_PASSWORD;
-                    }
-                }
-                // Ignore any other keys.
-            }
-            //----- STATE: DELETE_OLD_PASSWORD (Admin delete the old password) -----
-            else if(state == STATE_DELETE_OLD_PASSWORD){
-                if (current_selection > -1 && current_selection < 9) {
-                    memset(user_passwords[current_selection], 0, sizeof(user_passwords[current_selection]));
-                    display_message("8888");
-                    blink_led(2, 'g', 300ms);
-                    // Return to normal mode.
-                    state = STATE_NORMAL;
-                    save_all_passwords_to_flash();
-                    clear_input();
-                    ThisThread::sleep_for(1000ms);
-                    slcd.clear();
-                }
-            }
-            //----- STATE: SET_NEW_PASSWORD (Admin enters a new password) -----
-            else if (state == STATE_SET_NEW_PASSWORD) {
-                // Admin enters new password digits.
-                if (key != '#' && position < 8) {
-                    entered_password[position] = key;
-                    position++;
-                    update_input_display();
-                }
-                else if (key == '#' && position > 0) {
-                    entered_password[position] = '\0';
-                    
-                    // Ensure new password is at least 4 digits.
-                    if (position < 4) {
-                        display_message("INSF");
-                        led_on_for('r', 1000ms);
+                    else if (key >= '1' && key <= '9') {
+                        current_selection = key - '1';  // Map key '1'-'9' to indices 0-8.
+                        // Build a message such as "ChU1", "ChU2", etc.
+                        char msg[5] = "CdU";
+                        msg[3] = key; 
+                        msg[4] = '\0';
+                        display_message(msg);
                         clear_input();
-                        continue;  // Stay in SET_NEW_PASSWORD state.
-                    }
-                    
-                    // Pad with zeros if necessary.
-                    if (position < 8) {
-                        for (int i = position; i < 8; i++) {
-                            entered_password[i] = '0';
+
+
+                        ThisThread::sleep_for(1000ms);
+                        slcd.clear(); //Clear "CdU "
+                        display_message("C1d2");
+                        clear_input();
+                        key = '\0';
+
+                        char confirm_key = '\0';
+                        while (confirm_key != '#') {
+                            key = keypad.ReadKey();  
+                            if (key == '1' || key == '2') {
+                                confirm_key = key;
+                                slcd.clear();
+                                slcd.Home();
+                                slcd.printf("%c",confirm_key);
+                            }
+                            else if (key == '#') {
+                                break;
+                            }
+                            ThisThread::sleep_for(200ms);
                         }
-                        entered_password[8] = '\0';
+                        if(confirm_key == '1'){
+                            slcd.clear();
+                            slcd.Home();
+                            clear_input();
+                            slcd.printf("EnEr");
+                            state = STATE_SET_NEW_PASSWORD;
+                        }
+                        else if(confirm_key == '2'){
+                            state = STATE_DELETE_OLD_PASSWORD;
+                        }
                     }
-                    
-                    // Save the new password according to selection.
-                    if (current_selection == -1) {
-                        // Update admin password.
-                        strncpy(admin_password, entered_password, 8);
-                        admin_password[8] = '\0';
-                    } else {
-                        // Update one of the nine user passwords.
-                        strncpy(user_passwords[current_selection], entered_password, 8);
-                        user_passwords[current_selection][8] = '\0';
+                    // Ignore any other keys.
+                break;//end: STATE_ADMIN_MENU
+                //----- STATE: DELETE_OLD_PASSWORD (Admin delete the old password) -----
+                case STATE_DELETE_OLD_PASSWORD:
+                    if (current_selection > -1 && current_selection < 9) {
+                        memset(user_passwords[current_selection], 0, sizeof(user_passwords[current_selection]));
+                        display_message("8888");
+                        blink_led(2, 'g', 300ms);
+                        // Return to normal mode.
+                        state = STATE_NORMAL;
+                        save_all_passwords_to_flash();
+                        clear_input();
+                        ThisThread::sleep_for(1000ms);
+                        slcd.clear();
                     }
-                    
-                    // Write all updated passwords to flash.
-                    save_all_passwords_to_flash();
-                    
-                    // Confirmation message: "8888" indicates a successful save.
-                    display_message("8888");
-                    blink_led(2, 'g', 300ms);
-                    
-                    // Return to normal mode.
-                    state = STATE_NORMAL;
-                    clear_input();
-                    ThisThread::sleep_for(1000ms);
-                    slcd.clear();
-                }
-            } // end STATE_SET_NEW_PASSWORD
+                break;//end STATE_DELETE_OLD_PASSWORD
+                //----- STATE: SET_NEW_PASSWORD (Admin enters a new password) -----
+                case STATE_SET_NEW_PASSWORD:
+                    // Admin enters new password digits.
+                    if (key != '#' && position < 8) {
+                        entered_password[position] = key;
+                        position++;
+                        update_input_display();
+                    }
+                    else if (key == '#' && position > 0) {
+                        entered_password[position] = '\0';
+                        
+                        // Ensure new password is at least 4 digits.
+                        if (position < 4) {
+                            display_message("INSF");
+                            led_on_for('r', 1000ms);
+                            clear_input();
+                            continue;  // Stay in SET_NEW_PASSWORD state.
+                        }
+                        
+                        // Pad with zeros if necessary.
+                        if (position < 8) {
+                            for (int i = position; i < 8; i++) {
+                                entered_password[i] = '0';
+                            }
+                            entered_password[8] = '\0';
+                        }
+                        
+                        // Save the new password according to selection.
+                        if (current_selection == -1) {
+                            // Update admin password.
+                            strncpy(admin_password, entered_password, 8);
+                            admin_password[8] = '\0';
+                        } else {
+                            // Update one of the nine user passwords.
+                            strncpy(user_passwords[current_selection], entered_password, 8);
+                            user_passwords[current_selection][8] = '\0';
+                        }
+                        
+                        // Write all updated passwords to flash.
+                        save_all_passwords_to_flash();
+                        
+                        // Confirmation message: "8888" indicates a successful save.
+                        display_message("8888");
+                        blink_led(2, 'g', 300ms);
+                        
+                        // Return to normal mode.
+                        state = STATE_NORMAL;
+                        clear_input();
+                        ThisThread::sleep_for(1000ms);
+                        slcd.clear();
+                    }
+                break;// end STATE_SET_NEW_PASSWORD
+            }
         } // end if (key != NO_KEY)
         
         ThisThread::sleep_for(10ms);  // Polling delay.
