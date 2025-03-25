@@ -319,17 +319,10 @@ int main() {
                             slcd.printf("%c",confirm_key);
                         }
                         else if (key == '#') {
-                            //slcd.clear();
-                            //slcd.Home();
-                            //slcd.printf("");
-                            //ThisThread::sleep_for(1000ms);
-                            //slcd.clear();
                             break;
                         }
                         ThisThread::sleep_for(200ms);
                     }
-
-
                     if(confirm_key == '1'){
                         slcd.clear();
                         slcd.Home();
@@ -339,28 +332,22 @@ int main() {
                     }
                     else if(confirm_key == '2'){
                         state = STATE_DELETE_OLD_PASSWORD;
-                        //user_passwords[current_selection][8] = {'\0'};
-                        //display_message("8888");
-                        //ThisThread::sleep_for(1000ms);
-                        //clear_input();
-                        //slcd.clear(); //Clear "CdU "
                     }
                 }
                 // Ignore any other keys.
             }
-
+            //----- STATE: DELETE_OLD_PASSWORD (Admin delete the old password) -----
             else if(state == STATE_DELETE_OLD_PASSWORD){
                 if (current_selection > -1 && current_selection < 9) {
                     memset(user_passwords[current_selection], 0, sizeof(user_passwords[current_selection]));
                     display_message("8888");
                     blink_led(2, 'g', 300ms);
-                    
                     // Return to normal mode.
                     state = STATE_NORMAL;
                     save_all_passwords_to_flash();
                     clear_input();
                     ThisThread::sleep_for(1000ms);
-                    slcd.clear(); //Clear "CdU "
+                    slcd.clear();
                 }
             }
             //----- STATE: SET_NEW_PASSWORD (Admin enters a new password) -----
