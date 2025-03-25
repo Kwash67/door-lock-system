@@ -45,7 +45,8 @@ int position = 0;                   // Current number of entered digits
 enum SystemState {
     STATE_NORMAL,          // Regular user login mode.
     STATE_ADMIN_MENU,      // Admin mode: select which password to update.
-    STATE_SET_NEW_PASSWORD // Admin enters new password for the selected slot.
+    STATE_SET_NEW_PASSWORD, // Admin enters new password for the selected slot.
+    STATE_DELETE_OLD_PASSWORD // Delete the old password.
 };
 
 SystemState state = STATE_NORMAL;
@@ -288,23 +289,80 @@ int main() {
                 //   Keys '1' through '9' select the corresponding user password.
                 if (key == '0') {
                     current_selection = -1;  // -1 indicates admin password update.
-                    display_message("ChAd");  // "ChAd" = Change admin (short for admin)
+                    display_message("ChAd");  // "CDAd" = Change or Delete admin (short for admin)
                     clear_input();
                     state = STATE_SET_NEW_PASSWORD;
                 }
                 else if (key >= '1' && key <= '9') {
                     current_selection = key - '1';  // Map key '1'-'9' to indices 0-8.
                     // Build a message such as "ChU1", "ChU2", etc.
-                    char msg[5] = "ChU";
+                    char msg[5] = "CdU";
                     msg[3] = key; 
                     msg[4] = '\0';
                     display_message(msg);
                     clear_input();
-                    state = STATE_SET_NEW_PASSWORD;
+
+
+                    ThisThread::sleep_for(1000ms);
+                    slcd.clear(); //Clear "CdU "
+                    display_message("C1d2");
+                    clear_input();
+                    key = '\0';
+
+                    char confirm_key = '\0';
+                    while (confirm_key != '#') {
+                        key = keypad.ReadKey();  
+                        if (key == '1' || key == '2') {
+                            confirm_key = key;
+                            slcd.clear();
+                            slcd.Home();
+                            slcd.printf("%c",confirm_key);
+                        }
+                        else if (key == '#') {
+                            //slcd.clear();
+                            //slcd.Home();
+                            //slcd.printf("");
+                            //ThisThread::sleep_for(1000ms);
+                            //slcd.clear();
+                            break;
+                        }
+                        ThisThread::sleep_for(200ms);
+                    }
+
+
+                    if(confirm_key == '1'){
+                        slcd.clear();
+                        slcd.Home();
+                        clear_input();
+                        slcd.printf("EnEr");
+                        state = STATE_SET_NEW_PASSWORD;
+                    }
+                    else if(confirm_key == '2'){
+                        state = STATE_DELETE_OLD_PASSWORD;
+                        //user_passwords[current_selection][8] = {'\0'};
+                        //display_message("8888");
+                        //ThisThread::sleep_for(1000ms);
+                        //clear_input();
+                        //slcd.clear(); //Clear "CdU "
+                    }
                 }
                 // Ignore any other keys.
             }
-            
+
+            else if(state == STATE_DELETE_OLD_PASSWORD){
+                if (current_selection > -1 && current_selection < 9) {
+                    memset(user_passwords[current_selection], 0, sizeof(user_passwords[current_selection]));
+                    display_message("8888");
+                    blink_led(2, 'g', 300ms);
+                    
+                    // Return to normal mode.
+                    state = STATE_NORMAL;
+                    save_all_passwords_to_flash();
+                    clear_input();
+                    ThisThread::sleep_for(1000ms);
+                    slcd.clear(); //Clear "CdU "
+                }
+            }
             //----- STATE: SET_NEW_PASSWORD (Admin enters a new password) -----
             else if (state == STATE_SET_NEW_PASSWORD) {
                 // Admin enters new password digits.
