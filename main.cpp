@@ -28,38 +28,44 @@ int main()
     InputModule inputModule(keypad, slcd);
     UserManagement userManager;
 
+    slcd.printf("Entr");
+    ThisThread::sleep_for(500ms);
+    slcd.clear();
+
     while (true) 
     {
         if(tries <= max_tries) {
             
-            inputModule.processInput();
+            while( !inputModule.hasPassword() ) {
+                inputModule.processInput();
+            }
 
             if(inputModule.hasPassword()) {
                 const char* password = inputModule.getEnteredPassword();
                 auth = userManager.authenticate(password);
+                if(auth == 'u'){
+                    // Normal User, Open Door
+                    slcd.printf("Open");
+                    led = 1;
+                    ThisThread::sleep_for(2s);
+                    led = 0;
+                    auth = 'h'; // After operations, set auth to 'h'
+                }
+                else if(auth == 'a'){
+                    // Admin menu
+                    slcd.printf("Admin");
+                    auth = 'h'; // After operations, set auth to 'h'
+                }
+                else if(auth == 'x'){
+                    slcd.printf("FAIL");
+                    tries++;
+                    led2 = 1;
+                    ThisThread::sleep_for(2s);
+                    led2 = 0;
+                    auth = 'h'; // After operations, set auth to 'h'
+                }
             }
 
-            if(auth == 'u'){
-                // Normal User, Open Door
-                slcd.printf("Open");
-                led = 1;
-                ThisThread::sleep_for(2s);
-                led = 0;
-                auth = 'h'; // After operations, set auth to 'h'
-            }
-            else if(auth == 'a'){
-                // Admin menu
-                slcd.printf("Admin");
-                auth = 'h'; // After operations, set auth to 'h'
-            }
-            else if(auth == 'x'){
-                slcd.printf("FAIL");
-                tries++;
-                led2 = 1;
-                ThisThread::sleep_for(2s);
-                led2 = 0;
-                auth = 'h'; // After operations, set auth to 'h'
-            }
             else {   
                 // Home
                 slcd.printf("Entr");

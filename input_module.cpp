@@ -7,6 +7,7 @@ InputModule::InputModule(Keypad& keypad, SLCD& slcd) : keypad(keypad), slcd(slcd
 }
 
 void InputModule::processInput() {
+
     char key = keypad.ReadKey();
     if (key != NO_KEY) 
     {
@@ -18,7 +19,7 @@ void InputModule::processInput() {
 
             for(int i = 0; i < position; i++)
             {
-                showed_password[7 - position + i] = entered_password[i];
+                showed_password[8 - position + i] = entered_password[i];
             }
 
             position++;
