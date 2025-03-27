@@ -1,17 +1,19 @@
 #include "user_management.h"
 #include <cstring>
 
-UserManagement::UserManagement() {
+UserManagement::UserManagement(Keypad& keypad, SLCD& slcd) : keypad(keypad), slcd(slcd) {
     init_flash();
     
     // Initialize with default users
     strncpy(users[0].password, "12345678", 8);
     users[0].password[8] = '\0';
     users[0].role = 'a';
+    strncpy(users[0].name, "a0", sizeof(users[0].name));
     
     strncpy(users[1].password, "00000000", 8);
     users[1].password[8] = '\0';
     users[1].role = 'u';
+    strncpy(users[1].name, "u1", sizeof(users[1].name));
     
     // Clear remaining slots
     for (int i = 2; i < MAX_USERS; i++) {
@@ -20,6 +22,93 @@ UserManagement::UserManagement() {
     
     // Save default users to flash
     save_users();
+}
+
+void UserManagement::launch_admin() {
+    slcd.printf("Admn");
+    ThisThread::sleep_for(1s);
+    slcd.clear();
+    slcd.Home();
+
+    // Menu items
+    const char* menu_items[] = {
+        "OPEN",   // First screen
+        "Add.u",   // Add user
+        "dEL.u",   // Delete user
+        "Ch.PS",   // Change password
+        "EXIT",    // Exit
+    };
+    const int menu_count = sizeof(menu_items) / sizeof(menu_items[0]);
+    
+    int current_menu = 0;
+    const unsigned long scroll_interval = 2000; // 2 seconds between scrolls
+    
+    unsigned long last_scroll_time = us_ticker_read() / 1000;
+    
+    while (true) {
+        // Get current time
+        unsigned long current_time = us_ticker_read() / 1000;
+        
+        // Display current menu item
+        slcd.clear();
+        slcd.Home();
+        slcd.printf("%s", menu_items[current_menu]);
+        
+        // Wait for key input
+        char key = keypad.ReadKey();
+        if (key != NO_KEY) 
+        {
+            // Reset scroll timer on key press
+            last_scroll_time = current_time;
+            
+            // Simple navigation logic
+            if (key == '*') {
+                // Move to next menu item
+                current_menu = (current_menu + 1) % menu_count;
+            }
+            else if (key == '#') {
+                // Select current menu item
+                switch (current_menu) {
+                    case 0: // Open
+                        // Implement open functionality
+                        slcd.clear();
+                        slcd.Home();
+                        for (int i = 0; i < 3; i++){
+                            slcd.printf("Open");
+                            ThisThread::sleep_for(200ms);
+                            slcd.clear();
+                            ThisThread::sleep_for(200ms);
+                        }
+                        return; // Exit the function
+                    case 1: // Add user
+                        // Implement add user functionality
+                        break;
+                    case 2: // Delete user
+                        // Implement delete user functionality
+                        break;
+                    case 3: // Change password
+                        // Implement change password functionality
+                        break;
+                    case 4: // Exit Admin
+                        slcd.clear();
+                        slcd.Home();
+                        slcd.printf("Bye");
+                        ThisThread::sleep_for(1s);
+                        return; // Exit the function
+                }
+            }
+        }
+        else {
+            // Auto-scroll only if enough time has passed
+            if (current_time - last_scroll_time >= scroll_interval) {
+                current_menu = (current_menu + 1) % menu_count;
+                last_scroll_time = current_time;
+            }
+        }
+        
+        // Small delay to prevent tight loop
+        ThisThread::sleep_for(50ms);
+    }
 }
 
 void UserManagement::init_flash() {
@@ -79,9 +168,26 @@ bool UserManagement::add_user(const char* password, char role) {
     // Find empty slot and add new user
     for (int i = 0; i < MAX_USERS; i++) {
         if (users[i].password[0] == '\0') {
+            // Copy password
             strncpy(users[i].password, password, 8);
             users[i].password[8] = '\0'; // Ensure null termination
+            
+            // Set role
             users[i].role = role;
+            
+            // Set name based on role and index
+            if (role == 'a') {
+                // First admin is always 'a0', subsequent are 'a1', 'a2', etc.
+                if (i == 0) {
+                    strncpy(users[i].name, "a0", sizeof(users[i].name));
+                } else {
+                    snprintf(users[i].name, sizeof(users[i].name), "a%d", i);
+                }
+            } else {
+                // User names start from 'u1'
+                snprintf(users[i].name, sizeof(users[i].name), "u%d", i);
+            }
+            
             save_users();
             return true;
         }
@@ -89,10 +195,10 @@ bool UserManagement::add_user(const char* password, char role) {
     return false; // No space available
 }
 
-bool UserManagement::remove_user(const char* password) {
-    // Find and remove user with matching password
+bool UserManagement::remove_user(const char* user_name) {
+    // Find and remove user with matching name
     for (int i = 0; i < MAX_USERS; i++) {
-        if (strcmp(password, users[i].password) == 0) {
+        if (strcmp(user_name, users[i].name) == 0) {
             memset(&users[i], 0, sizeof(User));
             save_users();
             return true;
@@ -101,23 +207,19 @@ bool UserManagement::remove_user(const char* password) {
     return false; // User not found
 }
 
-bool UserManagement::change_password(const char* old_password, const char* new_password) {
+bool UserManagement::change_password(const char* user_name, const char* new_password) {
     // Validate new password (must be 8 characters)
     size_t new_pass_len = strlen(new_password);
     if (new_pass_len == 0 || new_pass_len > 8) {
         return false; // Invalid password length
     }
     
-    // Find user with matching old password
+    // Find user with matching name
     for (int i = 0; i < MAX_USERS; i++) {
-        if (strcmp(old_password, users[i].password) == 0) {
-            // Store old role
-            char role = users[i].role;
-            
+        if (strcmp(user_name, users[i].name) == 0) {
             // Update password
             strncpy(users[i].password, new_password, 8);
             users[i].password[8] = '\0'; // Ensure null termination
-            users[i].role = role;        // Preserve original role
             
             // Save changes to flash
             save_users();
@@ -125,5 +227,5 @@ bool UserManagement::change_password(const char* old_password, const char* new_p
         }
     }
     
-    return false; // Old password not found
+    return false; // User not found
 }

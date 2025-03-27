@@ -17,64 +17,69 @@ Keypad keypad(PTC8, PTA5, PTA4, PTA12, PTD3, PTA2, PTA1);
 SLCD slcd;
 DigitalOut led(LED1);
 DigitalOut led2(LED2);
-char auth = 'h';
+char auth;
 int tries = 0;
-int max_tries = 4;
+int max_tries = 2;
+
+/**
+* @brief Opens the door
+*/
+void openDoor(){
+    slcd.printf("Open");
+    for (int i = 0; i < 3; i++){
+        slcd.printf("Open");
+        ThisThread::sleep_for(200ms);
+        slcd.clear();
+        ThisThread::sleep_for(200ms);
+    }
+}
 
 int main() 
 {
     slcd.Home();  
     slcd.clear();
     InputModule inputModule(keypad, slcd);
-    UserManagement userManager;
-
-    slcd.printf("Entr");
-    ThisThread::sleep_for(500ms);
-    slcd.clear();
+    UserManagement userManager(keypad, slcd);
 
     while (true) 
     {
         if(tries <= max_tries) {
             
+            // Collect user input
             while( !inputModule.hasPassword() ) {
                 inputModule.processInput();
             }
 
+            // Process the input once received
             if(inputModule.hasPassword()) {
                 const char* password = inputModule.getEnteredPassword();
-                auth = userManager.authenticate(password);
-                if(auth == 'u'){
-                    // Normal User, Open Door
-                    slcd.printf("Open");
-                    led = 1;
-                    ThisThread::sleep_for(2s);
-                    led = 0;
-                    auth = 'h'; // After operations, set auth to 'h'
-                }
-                else if(auth == 'a'){
-                    // Admin menu
-                    slcd.printf("Admin");
-                    auth = 'h'; // After operations, set auth to 'h'
-                }
-                else if(auth == 'x'){
-                    slcd.printf("FAIL");
-                    tries++;
-                    led2 = 1;
-                    ThisThread::sleep_for(2s);
-                    led2 = 0;
-                    auth = 'h'; // After operations, set auth to 'h'
-                }
+                auth = userManager.authenticate(password); // Check the auth level
             }
 
-            else {   
-                // Home
-                slcd.printf("Entr");
+            if(auth == 'u'){
+                // Normal User, Open Door
+                openDoor();
+                inputModule.reset();
             }
+            else if(auth == 'a'){
+                // Admin menu
+                userManager.launch_admin();
+                inputModule.reset();
+            }
+            else if(auth == 'x'){
+                slcd.printf("FAIL");
+                ThisThread::sleep_for(2s);
+                tries++;
+                inputModule.reset();
+            }
+
         }
         else {
+            // LOCKDOWN !!!!
             slcd.printf("WAIT");
-            ThisThread::sleep_for(10s);
+            ThisThread::sleep_for(5s);
             tries = 0;
+            inputModule.reset();
         }
 
         ThisThread::sleep_for(20ms);

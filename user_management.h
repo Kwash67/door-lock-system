@@ -3,11 +3,14 @@
 #undef __ARM_FP // removes the error on the #include "mbed.h" line
 #include "mbed.h"
 #include "FlashIAP.h"
+#include "keypad.h"
+#include "SLCD/SLCD.h"
 
 // Define User struct for storing passwords and roles
 typedef struct {
     char password[9];  // 8 characters + null terminator
     char role;         // 'a' for admin, 'u' for user, etc.
+    char name[2];      // 'a0' for admin, 'u1', 'u2', 'u3', ...
 } User;
 
 // Constants for flash storage
@@ -26,6 +29,8 @@ typedef struct {
  */
 class UserManagement {
 private:
+    Keypad& keypad;
+    SLCD& slcd;
     FlashIAP flash;                                // Flash interface
     uint32_t current_sector;                       // Current active sector in flash
     uint32_t wear_count[FLASH_SECTOR_SIZE / USER_SIZE]; // Track sector wear
@@ -40,7 +45,12 @@ public:
     /**
      * @brief Constructor initializes flash and loads users
      */
-    UserManagement();
+    UserManagement(Keypad& keypad, SLCD& slcd);
+
+    /**
+     * @brief Displays Admin Menu, and serves as the launchpad for all admin commands
+     */
+    void launch_admin();
 
     /**
      * @brief Load users from flash memory
