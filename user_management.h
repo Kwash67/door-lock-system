@@ -36,10 +36,21 @@ private:
     uint32_t wear_count[FLASH_SECTOR_SIZE / USER_SIZE]; // Track sector wear
     User users[MAX_USERS];                         // User array
 
+    // Input stuff
+    char showed_password[9] = {'\0'};
+    char entered_password[9] = {'\0'}; 
+    int position = 0;
+    char id;
+    char user_name[2] = {'\0'};
+    bool INPUT_ENTERED;
+
     // Private methods for flash operations
     void init_flash();
     uint32_t find_least_worn_sector();
     void write_to_flash(uint32_t address, const void* data, uint32_t size);
+    void processInput(const char* input_type);
+    void reset_input();
+    bool hasInput() const { return INPUT_ENTERED; }
 
 public:
     /**
@@ -90,7 +101,7 @@ public:
     * @param new_password New password to set
     * @return true if successful, false if old password not found or invalid new password
     */
-    bool change_password(const char* old_password, const char* new_password);
+    bool change_password(const char* user_name, const char* new_password);
 };
 
 #endif // USER_MANAGEMENT_H
