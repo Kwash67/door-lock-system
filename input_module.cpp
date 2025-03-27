@@ -44,13 +44,13 @@ void InputModule::processInput() {
             entered_password[8] = '\0'; // Ensure null termination
             
             // Check if password is too short
-            if (position < 8) {
+            if (position < 4) {
                 slcd.printf("INSF");  // Display "INSF"
                 ThisThread::sleep_for(2s);
                 reset();
             }
 
-            else {
+            else if (position <= 8 && position >= 4) {
                 PASSWORD_ENTERED = true;
             }
         }
