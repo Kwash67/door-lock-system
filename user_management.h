@@ -10,7 +10,7 @@
 typedef struct {
     char password[9];  // 8 characters + null terminator
     char role;         // 'a' for admin, 'u' for user, etc.
-    char name[2];      // 'a0' for admin, 'u1', 'u2', 'u3', ...
+    char name[3];      // 'a0' for admin, 'u1', 'u2', 'u3', ...
 } User;
 
 // Constants for flash storage
@@ -40,8 +40,8 @@ private:
     char showed_password[9] = {'\0'};
     char entered_password[9] = {'\0'}; 
     int position = 0;
-    char id;
-    char user_name[2] = {'\0'};
+    char id = '\0';
+    char user_name[3] = {'\0'};
     bool INPUT_ENTERED;
 
     // Private methods for flash operations
@@ -50,7 +50,6 @@ private:
     void write_to_flash(uint32_t address, const void* data, uint32_t size);
     void processInput(const char* input_type);
     void reset_input();
-    bool hasInput() const { return INPUT_ENTERED; }
 
 public:
     /**

@@ -84,19 +84,83 @@ void UserManagement::launch_admin() {
 
                     case 1: // Add user
                         // Implement add user functionality
-                        
-                        break;
-                    case 2: // Delete user
-                        // Implement delete user functionality
-                        break;
-                    case 3: { // Change password
-                        // Implement change password functionality
-                        while(!hasInput()){ processInput("id");}
                         reset_input();
-                        while(!hasInput()){ processInput("password");}
-                        std::string user_name = std::string("u") + id;
-                        if (change_password(user_name.c_str(), entered_password)) {
+                        while(!INPUT_ENTERED){ processInput("password");}
+                        if (add_user(entered_password, 'u')) {
+                            for (int i = 0; i < 3; i++){
+                                slcd.printf("8888");
+                                ThisThread::sleep_for(200ms);
+                                slcd.clear();
+                                ThisThread::sleep_for(200ms);
+                            }
                             return;
+                        }
+                        else {
+                            slcd.printf("None");
+                            ThisThread::sleep_for(500ms);
+                        }
+                        break;
+                    case 2: { // Delete user
+                        // Reset input states
+                        id = '\0';
+                        INPUT_ENTERED = false;
+                        position = 0;
+                        slcd.clear();
+                        slcd.Home();
+                        slcd.printf("ID  ");
+                        slcd.Colon(1);
+                        ThisThread::sleep_for(500ms);
+                        while (!INPUT_ENTERED) {processInput("id");}
+                        
+                        // Create user name more explicitly
+                        char user_name[10];
+                        snprintf(user_name, sizeof(user_name), "u%c", id);
+                        
+                        if (remove_user(user_name)) {
+                            for (int i = 0; i < 3; i++){
+                                slcd.printf("8888");
+                                ThisThread::sleep_for(200ms);
+                                slcd.clear();
+                                ThisThread::sleep_for(200ms);
+                            }
+                            return;
+                        }
+                        else {
+                            slcd.printf("None");
+                            ThisThread::sleep_for(500ms);
+                        }
+                        break;
+                    }
+                    case 3: { // Change password
+                        // Reset input states
+                        id = '\0';
+                        INPUT_ENTERED = false;
+                        position = 0;
+                        slcd.clear();
+                        slcd.Home();
+                        slcd.printf("ID  ");
+                        slcd.Colon(1);
+                        ThisThread::sleep_for(500ms);
+                        while (!INPUT_ENTERED) {processInput("id");}
+                        reset_input();
+                        while(!INPUT_ENTERED){ processInput("password");}
+
+                        // Create user name more explicitly
+                        char user_name[10];
+                        snprintf(user_name, sizeof(user_name), "u%c", id);
+
+                        if (change_password(user_name, entered_password)) {
+                            for (int i = 0; i < 3; i++){
+                                slcd.printf("8888");
+                                ThisThread::sleep_for(200ms);
+                                slcd.clear();
+                                ThisThread::sleep_for(200ms);
+                            }
+                            return;
+                        }
+                        else {
+                            slcd.printf("None");
+                            ThisThread::sleep_for(500ms);
                         }
                         break;
                     }
@@ -200,6 +264,10 @@ bool UserManagement::add_user(const char* password, char role) {
             }
             
             save_users();
+            slcd.clear();
+            slcd.Home();
+            slcd.printf("%s", users[i].name);
+            ThisThread::sleep_for(1s);
             return true;
         }
     }
@@ -207,10 +275,11 @@ bool UserManagement::add_user(const char* password, char role) {
 }
 
 bool UserManagement::remove_user(const char* user_name) {
-    // Find and remove user with matching name
+    // Find user with matching name
     for (int i = 0; i < MAX_USERS; i++) {
         if (strcmp(user_name, users[i].name) == 0) {
             memset(&users[i], 0, sizeof(User));
+            // Save changes to flash
             save_users();
             return true;
         }
@@ -244,30 +313,33 @@ bool UserManagement::change_password(const char* user_name, const char* new_pass
 
 void UserManagement::processInput(const char* input_type) {
     if(strcmp(input_type, "id") == 0) {
-        slcd.clear();
-        slcd.Home();
-        slcd.printf("ID:  ");
         char key = keypad.ReadKey();
         if (key != NO_KEY) {
-            if(position < 1 && key != '*' && key != '#') {
+            if(position < 1 && key != '*' && key != '#') { // Limit to single digit
                 slcd.clear();
                 slcd.Home();
+                id = key; // Store the key directly
                 position++;
-                key = id;
-                slcd.printf("ID: %c", key);
+                slcd.printf("ID %c", id);
+                slcd.Colon(1);
             }
             else if (key == '*') // Clear
             {
                 id = '\0';
                 INPUT_ENTERED = false;
                 position = 0;
-                slcd.printf("ID:  ");
+                slcd.clear();
+                slcd.Home();
+                slcd.printf("ID  ");
+                slcd.Colon(1);
             }
             else if (key == '#') //Confirm
             {
-                slcd.clear();
-                slcd.Home();
-                INPUT_ENTERED = true;
+                if (position > 0) { // Ensure an ID was entered
+                    slcd.clear();
+                    slcd.Home();
+                    INPUT_ENTERED = true;
+                }
             }
         }
     }
@@ -331,5 +403,5 @@ void UserManagement::reset_input() {
     slcd.clear();
     slcd.Home();
     slcd.printf("Pswd");
-    ThisThread::sleep_for(500ms);
+    ThisThread::sleep_for(300ms);
 }
