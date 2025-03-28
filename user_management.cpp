@@ -293,19 +293,41 @@ bool UserManagement::change_password(const char* user_name, const char* new_pass
     if (new_pass_len == 0 || new_pass_len > 8) {
         return false; // Invalid password length
     }
-    
-    // Find user with matching name
-    for (int i = 0; i < MAX_USERS; i++) {
-        if (strcmp(user_name, users[i].name) == 0) {
-            // Update password
-            strncpy(users[i].password, new_password, 8);
-            users[i].password[8] = '\0'; // Ensure null termination
-            
-            // Save changes to flash
-            save_users();
-            return true;
-        }
+
+    // In admin mode:
+    //   Key '0' selects updating the admin password.
+    //   Keys '1' through '9' select the corresponding user password.
+    if (user_name[1] == '0') {
+        slcd.clear();
+        slcd.Home();
+        slcd.printf("ChAd");
+        ThisThread::sleep_for(1s);
+        slcd.clear();
+        slcd.Home();
+        // Update password
+        strncpy(users[0].password, new_password, 8);
+        users[0].password[8] = '\0'; // Ensure null termination
+        
+        // Save changes to flash
+        save_users();
+        return true;
     }
+    else{
+        // Find user with matching name
+        for (int i = 0; i < MAX_USERS; i++) {
+            if (strcmp(user_name, users[i].name) == 0) {
+                // Update password
+                strncpy(users[i].password, new_password, 8);
+                users[i].password[8] = '\0'; // Ensure null termination
+                
+                // Save changes to flash
+                save_users();
+                return true;
+            }
+        }
+        
+    }
+
     
     return false; // User not found
 }
