@@ -4,9 +4,10 @@
  */
 
 #undef __ARM_FP // removes the error on the #include "mbed.h" line
+#include "DigitalOut.h"
+#include "PinNames.h"
 #include "mbed.h"
 #include "keypad.h"
-#include "DigitalOut.h"
 #include "FlashIAP.h"
 #include "SLCD/SLCD.h"
 #include "input_module.h"
@@ -28,7 +29,9 @@ void openDoor(){
     slcd.printf("Open");
     for (int i = 0; i < 3; i++){
         slcd.printf("Open");
+        led = 0;
         ThisThread::sleep_for(200ms);
+        led = 1;
         slcd.clear();
         ThisThread::sleep_for(200ms);
     }
@@ -39,7 +42,7 @@ int main()
     slcd.Home();  
     slcd.clear();
     InputModule inputModule(keypad, slcd);
-    UserManagement userManager(keypad, slcd);
+    UserManagement userManager(keypad, slcd, led, led2);
 
     while (true) 
     {
@@ -67,16 +70,18 @@ int main()
                 inputModule.reset();
             }
             else if(auth == 'x'){
-                slcd.printf("FAIL");
+                slcd.printf("FA1L");
+                led2 = 0;
                 ThisThread::sleep_for(2s);
+                led2 = 1;
                 tries++;
-                inputModule.reset();
+                if(tries <= max_tries) inputModule.reset();
             }
 
         }
         else {
             // LOCKDOWN !!!!
-            slcd.printf("WAIT");
+            slcd.printf("WA1T");
             ThisThread::sleep_for(5s);
             tries = 0;
             inputModule.reset();

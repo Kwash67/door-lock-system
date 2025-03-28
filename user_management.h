@@ -5,6 +5,7 @@
 #include "FlashIAP.h"
 #include "keypad.h"
 #include "SLCD/SLCD.h"
+#include "DigitalOut.h"
 
 // Define User struct for storing passwords and roles
 typedef struct {
@@ -31,6 +32,8 @@ class UserManagement {
 private:
     Keypad& keypad;
     SLCD& slcd;
+    DigitalOut& led;
+    DigitalOut& led2;
     FlashIAP flash;                                // Flash interface
     uint32_t current_sector;                       // Current active sector in flash
     uint32_t wear_count[FLASH_SECTOR_SIZE / USER_SIZE]; // Track sector wear
@@ -50,12 +53,15 @@ private:
     void write_to_flash(uint32_t address, const void* data, uint32_t size);
     void processInput(const char* input_type);
     void reset_input();
+    void display_message(const char* msg);
+    void blink_led(int times, char led_type, std::chrono::milliseconds interval);
+    void led_on_for(char led_type, std::chrono::milliseconds duration);
 
 public:
     /**
      * @brief Constructor initializes flash and loads users
      */
-    UserManagement(Keypad& keypad, SLCD& slcd);
+    UserManagement(Keypad& keypad, SLCD& slcd, DigitalOut& led, DigitalOut& led2);
 
     /**
      * @brief Displays Admin Menu, and serves as the launchpad for all admin commands
