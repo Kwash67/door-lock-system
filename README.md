@@ -81,3 +81,9 @@ while (true) {
 ---
 
 *This project is not affiliated with Arm Mbed. For hardware support, visit the [Mbed forums](https://forums.mbed.com/).*
+
+## Demo Video
+
+See the system in action on the FRDM KL46Z board:
+
+[Watch the demo video](https://drive.google.com/file/d/1tYJgLYylGV4k29tyH4k7WVyckEmvQu-z/view?resourcekey)
