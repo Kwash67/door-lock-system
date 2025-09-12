@@ -75,7 +75,7 @@ while (true) {
 - Mbed OS docs: [os.mbed.com/docs/mbed-os/latest/](https://os.mbed.com/docs/mbed-os/latest/)
 
 ## Maintainers & Contributions
-- Maintained by: [Kwame Andoh](https://github.com/Kwash67)
+- Maintained by: [Kwashie Andoh](https://github.com/Kwash67)
 - Contributions welcome! Please see [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 ---
